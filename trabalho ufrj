@@ -1,0 +1,267 @@
+import random
+import time
+import copy
+
+def menuInicial(): # Essa função mostra a página inicial do jogo.
+    print("1 - Novo jogo")
+    print("2 - Carregar jogo")
+    print("3 - Exibir histórico de jogos")
+    print("0 - Sair")
+    op = input("Escolha uma opção: ")
+    return op
+
+def novoJogo(): # Essa função serve para o jogador escolher a dificuldade do jogo
+    print("Níveis de dificuldade")
+    print("1 - Fácil")
+    print("2 - Médio")
+    level = input("Escolha uma dificuldade: ")
+    return level
+
+def carregarJogo():
+    nomeDoJogo = input("Digite o nome do seu jogo: ") # Essa função serve para
+    f = open(f'{nomeDoJogo}','r+')                    # carregar um jogo salvo.
+    dadosSalvos = f.read()                            # A função irá pedir o nome
+    f.close()                                         # que foi salvo no jogo,
+    dadosSalvos2 = eval(dadosSalvos)                  # transformar os dados em uma lista
+    tabuleiro = dadosSalvos2[0]                       # e pegar as variáveis salvas
+    pos_vazias = dadosSalvos2[1]                      # para gerar o tabuleiro
+    tempoDeJogo = dadosSalvos2[2]                     # quando o jogador tentar
+    gabarito = dadosSalvos2[3]                        # abrir o seu jogo novamente
+    return tabuleiro,pos_vazias,tempoDeJogo,gabarito
+
+def tabuleiroInicial():
+    gabarito = [[1, 4, 7, 2, 5, 8, 3, 6, 9], [2, 5, 8, 3, 6, 9, 4, 7, 1], [3, 6, 9, 4, 7, 1, 5, 8, 2],
+               [4, 7, 1, 5, 8, 2, 6, 9, 3], [5, 8, 2, 6, 9, 3, 7, 1, 4], [6, 9, 3, 7, 1, 4, 8, 2, 5],
+               [7, 1, 4, 8, 2, 5, 9, 3, 6],[8, 2, 5, 9, 3, 6, 1, 4, 7],[9, 3, 6, 1, 4, 7, 2, 5, 8]]
+    tabuleiro = copy.deepcopy(gabarito)
+    x = 0
+    pos_vazias = []
+    level = novoJogo()
+    if level == '1':                            # De acordo com o nivel escolhido,
+        while x != 31:                          # serão geradas x posições vazias (0)
+            a = random.randint(0, 8)            # para serem preenchidas.
+            b = random.randint(0, 8)            # Como o jogo apresenta apenas uma
+            if tabuleiro[a][b] != 0:            # solução, as posições vazias serão
+                tabuleiro[a][b] = 0             # geradas a partir do gabarito, que
+                x += 1                          # no caso é o tabuleiro já resolvido.
+                pos_vazias.append([a, b])       # As posições vazias serão enviadas
+    elif level == '2':                          # para uma lista, e de acordo com essa
+        while x != 41:                          # lista verificaremos se uma jogada é
+            a = random.randint(0, 8)            # válida ou não.
+            b = random.randint(0, 8)
+            if tabuleiro[a][b] != 0:
+                tabuleiro[a][b] = 0
+                x += 1
+                pos_vazias.append([a, b])
+    return [tabuleiro,pos_vazias,gabarito,level]
+
+def gerarTabuleiro():
+    tabuleiro,pos_vazias,gabarito,level = tabuleiroInicial()
+    inicio = time.time()
+    tempoHistorico = 0
+    exibirTabuleiro(tabuleiro,pos_vazias)
+    c = True
+    if level == 1:
+        level = "Fácil"
+    else:
+        level = "Médio"
+    while c == True:
+        print("1 - Inserir um Número")                  # Essa função serve para jogar.
+        print("2 - Reiniciar o Jogo")                   # A parte de alterar o tabuleiro
+        print("3 - Salvar e sair do jogo")              # funciona como no batalha naval.
+        print("4 - Sair sem salvar")                    # Você deve escolher uma linha e uma
+        ac = input("Escolha uma das opções acima: ")    # coluna e depois o número que você
+        if ac == "1":                                   # deseja inserir nessa posição.
+            linha = int(input("Escolha uma linha: "))   # Para consultar se uma jogada é válida
+            coluna = int(input("Escolha uma coluna: ")) # o programa irá consultar se a posição
+            numero = int(input("Escolha um número: "))  # escolhida faz parte da lista "pos_vazias".
+            if [linha, coluna] in pos_vazias:           # Se fizer, o tabuleiro será alterado, e caso
+                tabuleiro[linha][coluna] = numero       # não fizer, aparecerá uma mensagem de erro.
+                print(exibirTabuleiro(tabuleiro,pos_vazias))
+                if verificarVitoria(gabarito,tabuleiro):
+                    fim = time.time()
+                    tempoDeJogo = (fim - inicio) + tempoHistorico
+                    minutos = tempoDeJogo // 60
+                    segundos = (tempoDeJogo - (minutos * 60)) // 1
+                    horas = (minutos//60)
+                    if horas == 0:
+                        if minutos == 0:
+                            tempoDeJogo = (f"Tempo total de jogo: {segundos} segundos!")
+                        else:
+                            tempoDeJogo = (f"Tempo total de jogo: {minutos} minutos e {segundos} segundos!")
+                    else:
+                        tempoDeJogo = (f"Tempo total de jogo: {horas} horas, {minutos} minutos e {segundos} segundos!")
+                    c = False
+                    print("Parabéns! Você venceu!")
+                    print(f"{tempoDeJogo}")
+                    salvarVencedor(level,tempoDeJogo)
+                else:
+                    pass
+            else:
+                print("Jogada inválida! Você não pode alterar essa posição.")
+        if ac == "2":
+            gerarTabuleiro()                                    # Se a pessoa optar por reiniciar o jogo,
+            inicio = time.time()                                # um novo tabuleiro será gerado da mesma forma
+        if ac == "3":                                           # que os outros.
+            fim = time.time()
+            tempoDeJogo = (fim - inicio) + tempoHistorico               # Caso a pessoa opte por salvar e sair,
+            tabuleiro = list(tabuleiro)                                 # os dados serão salvos em "salvarDados"
+            salvarDados = [tabuleiro,pos_vazias,tempoDeJogo,gabarito]   # e o usuário escolherá um nome para salvar
+            nomeArq = input("Escolha um nome para salvar o jogo: ")     # o jogo. Com isso, um arquivo txt será criado
+            f = open(f'{nomeArq}','w+')                                 # onde todas as informações necessárias para
+            f.write(str(salvarDados))                                   # carregar o jogo estarão salvas.
+            f.close()
+            c = False
+        if ac == "4":
+            fim = time.time()                                           # Caso o jogador opte por salvar sem sair
+            tempoDeJogo = (fim - inicio) + tempoHistorico               # será informado o tempo de jogo e o arquivo
+            minutos = tempoDeJogo // 60                                 # será encerrado.
+            segundos = (tempoDeJogo - (minutos * 60)) // 1
+            horas = (minutos // 60)
+            if horas == 0:
+                if minutos == 0:
+                    tempoDeJogo = (f"Tempo total de jogo: {segundos} segundos!")
+                else:
+                    tempoDeJogo = (f"Tempo total de jogo: {minutos} minutos e {segundos} segundos!")
+            else:
+                tempoDeJogo = (f"Tempo total de jogo: {horas} horas, {minutos} minutos e {segundos} segundos!")
+            c = False
+            print(f"Tempo total de jogo: {tempoDeJogo}!")
+    return print("Obrigado por jogar o sudoku!")
+
+def exibirTabuleiro(tabuleiro,pos_vazias):    # Essa função é feita exclusivamente
+    print('    0 1 2   3 4 5  6 7 8')         # para gerar o tabuleiro do jogo
+    print('  +-------+-------+-------+')      # sendo que os números iniciais
+    for i in range(len(tabuleiro)):           # serão dados em vermelho para
+        for j in range(len(tabuleiro)):       # facilitar a visualização e os
+            if [i, j] not in pos_vazias:      # movimentos.
+                if j % 8 == 0 and j != 0:
+                    print(f'\033[31m{tabuleiro[i][j]}\033[m', end=' |\n')
+                elif j == 0:
+                    print(f'{i}','|', f'\033[31m{tabuleiro[i][j]}\033[m', end=' ')
+                else:
+                    print(f'\033[31m{tabuleiro[i][j]}\033[m', end=' ')
+            else:
+                if j % 8 == 0 and j != 0:
+                    print(f'{tabuleiro[i][j]}', end=' |\n')
+                elif j == 0:
+                    print(f'{i}','|', f'{tabuleiro[i][j]}', end=' ')
+                else:
+                    print(f'{tabuleiro[i][j]}', end=' ')
+            if j == 8:
+                if i == 2 or i == 5 or i == 8:
+                    print('  +-------+-------+-------+')
+            if j == 2 or j == 5:
+                print('| ', end='')
+
+def retornarJogo():
+    tabuleiro,pos_vazias,tempoHistorico,gabarito = carregarJogo()
+    inicio = time.time()                                  # Essa função é praticamente igual
+    exibirTabuleiro(tabuleiro,pos_vazias)                 # a função gerarTabuleiro, mas no caso,
+    level = ""                                            # solicitará o nome do arquivo salvo
+    if len(pos_vazias) == 31:                             # e montará o tabuleiro baseado nas informações
+        level = "Fácil"                                   # salvas.
+    if len(pos_vazias) == 41:
+        level = "Médio"
+    c = True
+    while c == True:
+        print("1 - Inserir um Número")
+        print("2 - Reiniciar o Jogo")
+        print("3 - Salvar e sair do jogo")
+        print("4 - Sair sem salvar")
+        ac = input("Escolha uma das opções acima: ")
+        if ac == "1":
+            linha = int(input("Escolha uma linha: "))
+            coluna = int(input("Escolha uma coluna: "))
+            numero = int(input("Escolha um número: "))
+            if [linha, coluna] in pos_vazias:
+                tabuleiro[linha][coluna] = numero
+                print(exibirTabuleiro(tabuleiro, pos_vazias))
+                if verificarVitoria(gabarito, tabuleiro):
+                    fim = time.time()
+                    tempoDeJogo = (fim - inicio) + tempoHistorico
+                    minutos = tempoDeJogo // 60
+                    segundos = (tempoDeJogo - (minutos * 60)) // 1
+                    horas = (minutos // 60)
+                    if horas == 0:
+                        if minutos == 0:
+                            tempoDeJogo = (f"Tempo total de jogo: {segundos} segundos!")
+                        else:
+                            tempoDeJogo = (f"Tempo total de jogo: {minutos} minutos e {segundos} segundos!")
+                    else:
+                        tempoDeJogo = (f"Tempo total de jogo: {horas} horas, {minutos} minutos e {segundos} segundos!")
+                    c = False
+                    print("Parabéns! Você venceu!")
+                    print(f"{tempoDeJogo}")
+                    salvarVencedor(level, tempoDeJogo)
+                else:
+                    pass
+            else:
+                print("Jogada inválida! Você não pode alterar essa posição.")
+        if ac == "2":
+            gerarTabuleiro()
+            inicio = time.time()
+        if ac == "3":
+            fim = time.time()
+            tempoDeJogo = (fim - inicio) + tempoHistorico
+            tabuleiro = list(tabuleiro)
+            salvarDados = [[tabuleiro],[pos_vazias],[tempoDeJogo]]
+            nomeArq = input("Escolha um nome para salvar o jogo: ")
+            f = open(f'{nomeArq}','w+')
+            f.write(str(salvarDados))
+            f.close()
+            c = False
+        if ac == "4":
+            fim = time.time()
+            tempoDeJogo = (fim - inicio) + tempoHistorico
+            minutos = tempoDeJogo // 60
+            segundos = (tempoDeJogo - (minutos * 60)) // 1
+            horas = (minutos // 60)
+            if horas == 0:
+                if minutos == 0:
+                    tempoDeJogo = (f"Tempo total de jogo: {segundos} segundos!")
+                else:
+                    tempoDeJogo = (f"Tempo total de jogo: {minutos} minutos e {segundos} segundos!")
+            else:
+                tempoDeJogo = (f"Tempo total de jogo: {horas} horas, {minutos} minutos e {segundos} segundos!")
+            c = False
+            print(f"Tempo total de jogo: {tempoDeJogo}!")
+
+def verificarVitoria(gabarito,tabuleiro):          # Essa função verificará se o tabuleiro
+    for x in range(len(gabarito)):                 # é igual ao gabarito. Se for, significa
+        for y in range(len(gabarito)):             # que o jogador venceu. Se não for, o
+            if gabarito[x][y] != tabuleiro[x][y]:  # jogo continuará normalmente.
+                return False
+    return True
+
+def salvarVencedor(dificuldade,tempoDeJogo):                    # Essa função serve para
+    f = open("vencedores.txt","a")                              # salvar os dados do vencedor.
+    nomeDoVencedor = input("Digite o seu nome: ")               # Ela pedirá o nome do jogador
+    dadosDoVencedor = (nomeDoVencedor,dificuldade,tempoDeJogo)  # e criará um arquivo com essas informações
+    f.write(str(dadosDoVencedor))
+    f.close()
+
+def historicoDeJogo():
+    f = open("vencedores.txt","r")   # Essa função serve para mostrar o o Histórico de jogos
+    conteudo = f.read()
+    f.close()
+    print(f"{conteudo}")
+
+def main():
+    print("Seja bem vindo(a) ao Sudoku!")   # Função principal e que deve ser printada
+    op = menuInicial()                      # para conseguir jogar o sudoku
+    while True:
+        if op == "1":
+            gerarTabuleiro()
+            break
+        elif op == "2":
+            retornarJogo()
+            break
+        elif op == "3":
+            historicoDeJogo()
+            break
+        elif op == "0":
+            break
+        else:
+            print("Opção inválida.")
+    return print("Obrigado por jogar o sudoku!")
